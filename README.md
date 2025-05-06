@@ -25,3 +25,7 @@ reset-db
 ```
 
 Make sure that the SQLite `challenge.db` binary is at the same level as your working directory.
+
+## My Notes
+
+my notes are here: [readme](./docs/README.md)

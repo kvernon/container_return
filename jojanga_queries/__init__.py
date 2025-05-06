@@ -6,4 +6,8 @@ import sqlite3
 print("Connecting to/creating challenge.db at:", os.getcwd())
 
 DB_NAME = "challenge.db"
-db_connection = sqlite3.connect(DB_NAME)
+sqlite3.enable_callback_tracebacks(True)
+db_connection = sqlite3.connect(DB_NAME,
+                                check_same_thread=False,
+                                detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+db_connection.set_trace_callback(print)

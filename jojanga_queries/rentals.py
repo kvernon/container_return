@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import sqlite3
 from typing import List
 
 from jojanga_queries import db_connection
@@ -24,6 +25,7 @@ class Rental:
 
 
 def get_rental(id: str) -> Rental:
+    print(f"getting rental for id: {id}")
     """Get Rental from database.
 
     Args:
@@ -35,13 +37,26 @@ def get_rental(id: str) -> Rental:
     Returns:
         Rental: Rental dataclss instance
     """
-    cur = db_connection.cursor()
-    cur.execute("SELECT * FROM rentals WHERE id = ?", (id,))
-    record = cur.fetchone()
-    if record:
-        return Rental(*record)
-    else:
-        raise ValueError("Rental not found.")
+    try:
+        cur = db_connection.cursor()
+        print(f"cursor acquired for rental id: {id}")
+        print(f"executing query for rental id: {id}")
+        cur.execute("SELECT * FROM rentals WHERE id = ?", (id,))
+        print(f"executed query for rental id: {id}")
+        record = cur.fetchone()
+        print(record)
+        if record:
+            print(f"rental record found for id: {id}")
+            return Rental(*record)
+        else:
+            print(f"rental record not found: {id}")
+            raise ValueError("Rental not found.")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
 
 
 def list_rentals_for_user(user_id: str) -> List[Rental]:
@@ -57,14 +72,60 @@ def list_rentals_for_user(user_id: str) -> List[Rental]:
     Returns:
         List[Rental]: Array of Rental dataclass instances
     """
-    cur = db_connection.cursor()
-    cur.execute("SELECT * FROM rentals where user_id = ?", (user_id,))
-    records = cur.fetchall()
-    return [Rental(*record) for record in records]
+    try:
+        cur = db_connection.cursor()
+        cur.execute("SELECT * FROM rentals where user_id = ?", (user_id,))
+        records = cur.fetchall()
+        return [Rental(*record) for record in records]
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
+
+
+def get_in_progress_rentals_for_user(user_id: str) -> List[Rental]:
+    try:
+        print(f"cursor acquired for user_id: {user_id}")
+        cur = db_connection.cursor()
+        print(f"executing query for user_id: {user_id}")
+        cur.execute("SELECT * FROM rentals where user_id = ? AND status like 'IN_PROGRESS' ORDER BY date(expires_at)",
+                    (user_id,))
+        print(f"executed query for user_id: {user_id}")
+        records = cur.fetchall()
+        for entry in records:
+            for column in entry:
+                print(f"(raw) entry[{column}]")
+
+        return [Rental(*record) for record in records]
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
+
+
+def get_rental_for_user_with_asset_id(user_id: str, asset_id: str) -> Rental:
+    try:
+        cur = db_connection.cursor()
+        cur.execute("SELECT * FROM rentals WHERE user_id = ? AND asset_id = ?", (user_id, asset_id))
+        record = cur.fetchone()
+        if record:
+            return Rental(*record)
+        else:
+            raise ValueError("Rental not found.")
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()
 
 
 def complete_rental(
-    id: str, status: str, returned_at: str, returned_at_location_id: str
+        id: str, status: str, returned_at: str, returned_at_location_id: str
 ) -> None:
     """Complete Rental with provided args.
 
@@ -74,17 +135,25 @@ def complete_rental(
         returned_at (str): ISO8601 timestamp of return
         returned_at_location_id (str): Location ID of return
     """
-    cur = db_connection.cursor()
-    cur.execute(
-        """
-                UPDATE rentals
-                SET status = ?,
-                    returned_at = ?,
-                    returned_at_location_id = ?
-                WHERE id = ?
-                """,
-        (status, returned_at, returned_at_location_id, id),
-    )
-    db_connection.commit()
-    cur.close()
-    return get_rental(id)
+    try:
+
+        cur = db_connection.cursor()
+        cur.execute(
+            """
+                    UPDATE rentals
+                    SET status = ?,
+                        returned_at = ?,
+                        returned_at_location_id = ?
+                    WHERE id = ?
+                    """,
+            (status, returned_at, returned_at_location_id, id),
+        )
+        db_connection.commit()
+        cur.close()
+        return get_rental(id)
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+    except Exception as e:
+        print(e)
+    finally:
+        cur.close()

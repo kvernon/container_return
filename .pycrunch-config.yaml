@@ -1,0 +1,19 @@
+discovery:
+  exclusions:
+  - .venv/
+  - .venv\
+  - .pycrunch-config.yaml
+engine:
+  enable-web-ui: true
+  load-pytest-plugins: true
+  runtime: pytest
+pinned-tests:
+- tests.test_api:test_get_rental_by_id_and_no_rentals_should_be_not_found
+- tests.test_api:test_put_rentals_valid_date
+- tests.test_api:test_put_rentals_found_should_form_event
+- tests.test_api:test_get_rental_by_id_should_return_body
+- tests.test_api:test_put_rentals_bad_date
+- tests.test_api:test_put_rentals_not_found
+- tests.test_api:test_get_rentals_by_user_should_be_200
+- tests.test_api:test_get_rentals_by_user_and_nothing
+- tests.test_api:test_get_rental_by_id_should_return_200
